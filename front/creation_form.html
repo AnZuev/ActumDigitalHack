@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Обменять баллы</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="bonus_exchange.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <a class="bonusExchangeMain navbar-brand" href="">Биржа бонусных баллов</a>
+    </nav>
+    <div class="container"><div class="row"> <a href="list_of_offers.html"><button class="btn add-btn">Просмотреть все заявки</button></a> </div></div>
+    <div class="container">
+        <div class="row">
+        <div class="col-sm-4">
+        <h4>Обменять баллы</h4>
+        <form id="form_here">
+            <div class="form-group">
+                <label for="offeredBonusProgram"> У меня есть </label>
+                <div class="form-row">
+                    <div class="col-sm-8">
+                        <select class="form-control" name="bonusProgramOffered">
+                            <option value="megafon_offered">Мегафон</option>
+                            <option value="RZD_offered">РЖД</option>
+                            <option value="aeroflot_offered">Аэрофлот</option>
+                            <option value="shoko_offered">Шоколадница</option>
+                            <option value="S7_offered">S7 Airlines</option>
+                            <option value="mts_offered">МТС</option>
+                            <option value="starbucks_offered">Старбакс</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-4">
+                        <input type="number" class="form-control" name="points_offered" placeholder="0">
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="wantedBonusProgram"> Мне нужно </label>
+                <div class="form-row">
+                    <div class="col-sm-8">
+                        <select class="form-control" name="bonusProgramWanted">
+                            <option value="megafon_wanted">Мегафон</option>
+                            <option value="RZD_wanted">РЖД</option>
+                            <option value="aeroflot_wanted">Аэрофлот</option>
+                            <option value="shoko_wanted">Шоколадница</option>
+                            <option value="S7_wanted">S7 Airlines</option>
+                            <option value="mts_wanted">МТС</option>
+                            <option value="starbucks_wanted">Старбакс</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-4">
+                        <input type="number" class="form-control" name="points_wanted" placeholder="0">
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="row">
+                    <div class="col"><button class="btn submit-btn" onclick="confirmSubmission()">Опубликовать заявку</button></div>
+                    <div class="col"><p id="last_form_part"></p></div>
+                </div>
+            </div>
+        </form>
+        </div>
+        </div>
+    </div>
+
+    <script
+            src="https://code.jquery.com/jquery-3.3.1.min.js"
+            integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+            crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+    <script>
+        window.id = 0;
+        var host = "http://172.16.110.90:2999/";
+        var is_enough_points;
+        // check that the person has the number of points offered and to reset the fields
+        function confirmSubmission() {
+            var form_data;
+            $( "form" ).submit(function( event ) {
+                form_data = $( this ).serializeArray();
+                console.log(form_data);
+                var url_checking_balance = host + "checkBalance/" + window.id + "/" + form_data[0].value.slice(0, -8) + "/" + form_data[1].value;
+                $.get(url_checking_balance, function(result) {
+                    is_enough_points = result;
+
+                    if (is_enough_points) {
+                        console.log("here")
+                        $("#last_form_part").empty().append("Заявка добавлена!");
+                        document.getElementById("form_here").reset();
+                        var url_creating_offer = host + "createOffer/" + window.id + "/" + form_data[0].value.slice(0, -8) + "/" + form_data[1].value + "/" + form_data[2].value.slice(0, -7)
+                            + "/" + form_data[3].value;
+                        $.get(url_creating_offer);
+                    }
+                    else {
+                        $("#last_form_part").empty().append("У вас недостаточно баллов!");
+                    }
+
+                });
+                //is_enough_points = true;
+
+
+                event.preventDefault();
+            });
+
+        }
+
+    </script>
+</body>
+</html>

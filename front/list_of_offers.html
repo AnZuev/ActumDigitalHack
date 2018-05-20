@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Все предложения</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="bonus_exchange.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <a class="bonusExchangeMain navbar-brand" href="">Биржа бонусных баллов</a>
+    </nav>
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-9"> <h4>Все предложения</h4> </div>
+            <div class="col-sm-2"> <a href="creation_form.html" class="btn add-btn btn-sm">Добавить предложение</a></div>
+
+        </div>
+        <div class="row" id="offers_row">
+        </div>
+    </div>
+
+    <div class="modal fade" id="choosingOffer" tabindex="-1" role="dialog" aria-labelledby="choosingOfferTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title" id="choosingOfferLongTitle">Обменять баллы</h6>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                </div>
+                <div class="modal-footer">
+                </div>
+            </div>
+        </div>
+    </div>
+    <script
+            src="https://code.jquery.com/jquery-3.3.1.min.js"
+            integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+            crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+<script>
+    window.id = 0;
+    var host = "http://172.16.110.90:2999/";
+    var url_get_all_offers = host + "getOpenOffers";
+    var bonus_program_names;
+
+
+    var is_enough_points;
+    var points_in_account;
+    var current_card_index;
+
+    function draw_cards() {
+        for (var i=0; i< bonus_program_names.length;i++) {
+            $("#offers_row").append("<div class='col-sm-4'><div class='card'><div class='card-body'><h6 class='card-title'>" + bonus_program_names[i].brand_offered + ": " +bonus_program_names[i].points_offered + " баллов" + "</h6><p class='card-text'>" + bonus_program_names[i].brand_wanted +
+                ": " + bonus_program_names[i].points_wanted + "</p><a href='' class='submit-btn btn btn-sm btn-block' onclick='checkIfEnoughPoints(\"" + i + "\")' data-toggle=\"modal\" data-target=\"#choosingOffer\">Выбрать</a></div></div></div>");
+        }
+    }
+    $(document).ready(function () {
+        $.get(url_get_all_offers, function(result) {
+            bonus_program_names = result;
+            draw_cards()
+        });
+    });
+
+    function checkIfEnoughPoints(index_in_array) {
+        //console.log(bonus_program_names[index_in_array]);
+        // here should be a method that gets information about the client's bonus account (whether there's enough points for this particular offer)
+        var company_name = bonus_program_names[index_in_array].brand_wanted;
+        var points_needed = bonus_program_names[index_in_array].points_wanted;
+        console.log(bonus_program_names[index_in_array]);
+        var url_check_balance = host + "checkBalance/" + window.id + "/" + company_name + "/" +  points_needed;
+        $.get(url_check_balance, function(result) {
+            is_enough_points = result;
+            var url_get_user_points = host + "getBalance/" + company_name + "/" + window.id;
+            $.get(url_get_user_points, function(result) {
+                points_in_account = result;
+                //points_in_account = 251;
+                current_card_index = index_in_array;
+
+                if (is_enough_points) {
+                    $(".modal-body").empty().append("<p>Для обмена нужно: " + bonus_program_names[index_in_array].points_wanted + " баллов " + bonus_program_names[index_in_array].brand_wanted + "</p><p>Вы получите: " + bonus_program_names[index_in_array].points_offered + " баллов " +
+                        bonus_program_names[index_in_array].brand_offered + "</p><p>Ваш бонусный баланс: " + points_in_account + "</p>");
+                    $(".modal-footer").empty().append("<button type=\"button\" class=\"btn btn-secondary btn-sm\" data-dismiss=\"modal\">Отменить</button>\n" +
+                        "<button type=\"button\" class=\"btn submit-btn btn-sm\" data-dismiss='modal' onclick='exchangePoints(\"" + index_in_array + "\")'>Подтвердить</button>");
+                }
+                else {
+                    $(".modal-body").empty().append("<p>К сожалению, у вас недостаточно баллов. Не забывайте указывать ваш бонусный счет при оплате!</p>");
+                    $(".modal-footer").empty().append("<button type=\"button\" class=\"btn btn-secondary\" data-dismiss=\"modal\">Отменить</button>");
+                }
+            });
+
+
+        });
+        //is_enough_points = true;
+        // here should be a method that retrieves the information about the client's bonus account and returns the number of points there
+
+    }
+
+    // should call transfer bonus points from one account in the company to another
+    function exchangePoints(index_in_array) {
+        // transfer function as parameters takes window_id and
+        window.id = 0;
+        console.log(bonus_program_names[index_in_array]);
+        console.log("exchanging");
+        var url_exchange = host + "acceptOffer/" + window.id + "/" + bonus_program_names[index_in_array].offer_id;
+        $.get(url_exchange);
+
+        bonus_program_names.splice(index_in_array, 1);
+        $("#offers_row").empty();
+        draw_cards();
+        //$("")
+
+    }
+
+
+
+
+
+</script>
+</body>
+</html>
